@@ -52,6 +52,7 @@ Other shells: see WezTerm's docs on shell integration.
 | `inactive_brightness` | `0.5` | Share of brightness inactive tabs keep, from 0 to 1. |
 | `brightness_threshold` | `0.179` | Colours brighter than this (WCAG luminance) get black text. |
 | `update_interval` | `500` | How often, in ms, to check the folder and redraw. |
+| `title_suffix` | `nil` | A function that takes the tab (as `format-tab-title` gets it) and returns text to add after the folder name, or `nil`. |
 
 The plugin sets `use_fancy_tab_bar = false` and `status_update_interval`, and uses the
 `format-tab-title` and `update-status` events and the right status. Another plugin that uses

@@ -16,6 +16,9 @@ local defaults = {
   brightness_threshold = 0.179,
   -- How often, in milliseconds, to check the active pane's folder.
   update_interval = 500,
+  -- A function that takes the tab (as format-tab-title gets it) and returns
+  -- text to add after the folder name, or nil.
+  title_suffix = nil,
 }
 
 local function path_of(url)
@@ -73,10 +76,17 @@ function M.apply_to_config(config, opts)
   -- The retro tab bar draws the colours that format-tab-title returns.
   config.use_fancy_tab_bar = false
 
-  wezterm.on('format-tab-title', function(tab)
+  wezterm.on('format-tab-title', function(tab, tabs, panes, cfg, hover, max_width)
     local path = path_of(tab.active_pane.current_working_dir)
     local colour = colour_for(path) or opts.default_colour
     local folder = path:match('([^/]+)/*$') or tab.active_pane.title
+    local suffix = opts.title_suffix and opts.title_suffix(tab) or ''
+    if suffix ~= '' then
+      -- WezTerm cuts titles to max_width from the right, which would drop the
+      -- suffix. Shorten the folder instead, leaving room for the padding.
+      local room = max_width - 2 - wezterm.column_width(suffix)
+      folder = wezterm.truncate_right(folder, math.max(room, 0)) .. suffix
+    end
     -- Darken inactive tabs so the active one stands out.
     if not tab.is_active then
       colour = darken(colour, opts.inactive_brightness)
