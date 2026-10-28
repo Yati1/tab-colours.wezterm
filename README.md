@@ -1,4 +1,4 @@
-# tab-colours-wizterm
+# tab-colours.wezterm
 
 A WezTerm plugin that colours each tab by the folder its shell is in.
 
@@ -16,7 +16,7 @@ In `wezterm.lua`:
 local wezterm = require 'wezterm'
 local config = wezterm.config_builder()
 
-local tab_colours = wezterm.plugin.require('https://github.com/<owner>/tab-colours-wizterm')
+local tab_colours = wezterm.plugin.require('https://github.com/Yati1/tab-colours.wezterm')
 tab_colours.apply_to_config(config, {
   folders = {
     { match = 'c:/dev/project-a', colour = '#f11ece' },
