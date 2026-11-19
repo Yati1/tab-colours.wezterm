@@ -58,10 +58,10 @@ The plugin sets `use_fancy_tab_bar = false` and `status_update_interval`, and us
 `format-tab-title` and `update-status` events and the right status. Another plugin that uses
 those will clash with it.
 
-## Optional: a bell when Claude Code waits
+## Optional: a bell when Claude Code waits or finishes
 
 `optional/` holds hook scripts for [Claude Code](https://claude.com/claude-code). When Claude asks
-a question or wants permission, `wezterm-notify.ps1`:
+a question, wants permission or finishes a reply, `wezterm-notify.ps1`:
 
 - writes an empty file named for the pane, `~/.claude-waiting/<WEZTERM_PANE>`, so your
   `wezterm.lua` can put a 🔔 on that tab;
@@ -79,8 +79,8 @@ looks for `wezterm-focus.ps1` next to itself.
 
 ### 2. Add the hooks
 
-Merge these into `~/.claude/settings.json`. The first two run the script when Claude waits. The
-last three delete the pane's file when you reply, when Claude stops, or when the session ends.
+Merge these into `~/.claude/settings.json`. The first three run the script when Claude waits or
+finishes a reply. The last two delete the pane's file when you send a prompt or the session ends.
 
 ```json
 {
@@ -109,18 +109,18 @@ last three delete the pane's file when you reply, when Claude stops, or when the
         ]
       }
     ],
-    "UserPromptSubmit": [
+    "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "if ($env:WEZTERM_PANE) { Remove-Item \"$env:USERPROFILE\\.claude-waiting\\$env:WEZTERM_PANE\" -ErrorAction SilentlyContinue }; exit 0",
+            "command": "& \"$env:USERPROFILE\\.claude\\hooks\\wezterm-notify.ps1\"",
             "shell": "powershell"
           }
         ]
       }
     ],
-    "Stop": [
+    "UserPromptSubmit": [
       {
         "hooks": [
           {
@@ -152,8 +152,8 @@ If you already have hooks for these events, add these entries to their lists.
 
 Put `bell_for` above `apply_to_config` and pass it as `title_suffix`. The `update-status` handler
 reads `~/.claude-waiting` each tick. It also deletes a pane's file once Claude moves on after you
-answer, or once the pane closes. Claude starts its title with ✳ while idle, and the handler
-watches for the title to change from that.
+answer or send a prompt, or once the pane closes. Claude starts its title with ✳ while idle, and
+the handler watches for the title to change from that.
 
 ```lua
 local waiting_dir = wezterm.home_dir .. '/.claude-waiting'
@@ -198,6 +198,11 @@ wezterm.on('update-status', function(window)
       ids[id] = true
       table.insert(key, id)
     end
+  end
+  -- A hook may delete a file before this handler sees the title change. Forget
+  -- such panes, or the next file for them would go at once, before Claude idles.
+  for id in pairs(idle_seen) do
+    if not ids[id] then idle_seen[id] = nil end
   end
   waiting = ids
   table.sort(key)

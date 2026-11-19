@@ -1,7 +1,8 @@
-# Raises a Windows toast when Claude Code needs the user. Clicking it opens
-# wezterm-focus:<pane-id>, which wezterm-focus.vbs and wezterm-focus.ps1 handle
-# so your wezterm.lua can bring that pane's window and tab forward. WezTerm sets
-# WEZTERM_PANE in every pane, and Claude and this hook inherit it.
+# Raises a Windows toast when Claude Code needs the user or finishes a reply.
+# Clicking it opens wezterm-focus:<pane-id>, which wezterm-focus.vbs and
+# wezterm-focus.ps1 handle so your wezterm.lua can bring that pane's window and
+# tab forward. WezTerm sets WEZTERM_PANE in every pane, and Claude and this hook
+# inherit it.
 # Run it with Windows PowerShell 5.1 (powershell.exe). PowerShell 7 cannot load
 # the Windows toast API.
 [Console]::InputEncoding = [Text.Encoding]::UTF8
@@ -13,6 +14,7 @@ $body = switch ($data.hook_event_name) {
     $question = @($data.tool_input.questions)[0].question
     if ($question) { "Question: $question" } else { 'Claude has a question' }
   }
+  'Stop' { 'Claude has finished' }
   default { if ($data.message) { $data.message } else { 'Claude needs your attention' } }
 }
 
