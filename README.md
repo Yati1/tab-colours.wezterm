@@ -151,9 +151,9 @@ If you already have hooks for these events, add these entries to their lists.
 ### 3. Show the bell in WezTerm
 
 Put `bell_for` above `apply_to_config` and pass it as `title_suffix`. The `update-status` handler
-reads `~/.claude-waiting` each tick. It also deletes a pane's file once Claude moves on after you
-answer or send a prompt, or once the pane closes. Claude starts its title with ✳ while idle, and
-the handler watches for the title to change from that.
+reads `~/.claude-waiting` each tick. It deletes a pane's file once you look at the pane, once
+Claude moves on after you answer or send a prompt, or once the pane closes. Claude starts its title
+with ✳ while idle, and the handler watches for the title to change from that.
 
 ```lua
 local waiting_dir = wezterm.home_dir .. '/.claude-waiting'
@@ -187,7 +187,14 @@ wezterm.on('update-status', function(window)
     if id then found, pane = pcall(wezterm.mux.get_pane, id) end
     pane = found and pane or nil
     local title = pane and pane:get_title() or ''
-    if title:sub(1, #IDLE) == IDLE then
+    -- You are looking at the pane: it is the focused window's active pane.
+    local viewed = pane and window:is_focused()
+      and window:active_pane():pane_id() == id
+    if viewed then
+      os.remove(path)
+      idle_seen[id] = nil
+      id = nil
+    elseif title:sub(1, #IDLE) == IDLE then
       idle_seen[id] = true
     elseif id and (idle_seen[id] or not pane) then
       os.remove(path)
